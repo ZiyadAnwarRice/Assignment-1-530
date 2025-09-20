@@ -4,8 +4,14 @@
 
 #include "MyDB_PageHandle.h"
 #include "MyDB_Table.h"
+#include <map>
+#include <vector>
+#include <memory>
 
 using namespace std;
+
+class MyDB_Page;
+typedef shared_ptr<MyDB_Page> MyDB_PagePtr;
 
 class MyDB_BufferManager {
 
@@ -48,13 +54,66 @@ public:
 	~MyDB_BufferManager ();
 
 	// FEEL FREE TO ADD ADDITIONAL PUBLIC METHODS 
+	void EvictPage(MyDB_PagePtr page);
+	void LoadPageFromDisk(MyDB_PagePtr page);
+	void WritePageToDisk(MyDB_PagePtr page);
+	void DeallocateBuffer(void* buffer);
+	bool HasFreeBuffer();
+	void* AllocateBuffer();
+	MyDB_PagePtr FindLRUPage();
+	long getNextTimeStamp(){ return TimeStamp++; }
 
 private:
 
 	// YOUR STUFF HERE
-
+	vector<void*> buffer;
+	vector<bool> bufferTaken;
+	size_t pageSize;
+	size_t numPages;
+    string tempFile;
+	map<pair<MyDB_TablePtr, long>, MyDB_PagePtr> pageTableMap;
+	long nextTempPageID;
+	long TimeStamp;
 };
 
+class MyDB_Page : public std::enable_shared_from_this<MyDB_Page> {
+	public:
+		MyDB_Page(MyDB_TablePtr table, long pageId, bool pinned, MyDB_BufferManager& bufMgr);
+		~MyDB_Page();
+		
+		void* GetBytes();
+		void WroteBytes();
+		void AddRef();
+		void RemoveRef();
+		
+		bool IsPinned() const { return pinned; }
+		void SetPinned(bool p) { pinned = p; }
+		bool IsDirty() const { return dirty; }
+		void SetDirty(bool d) { dirty = d; }
+		bool IsBuffered() const { return buffered; }
+		void SetBuffered(bool b) { buffered = b; }
+		
+		long GetTimestamp() const { return timestamp; }
+		void SetTimestamp(long t) { timestamp = t; }
+		
+		MyDB_TablePtr GetTable() const { return table; }
+		long GetPageId() const { return pageId; }
+		int GetRefCount() const { return refCount; }
+		
+		void SetBuffer(void* buf) { buffer = buf; }
+		void* GetBuffer() const { return buffer; }
+
+	private:
+		MyDB_TablePtr table;
+		long pageId;
+		bool pinned;
+		bool dirty;
+		bool buffered;
+		void* buffer;
+		int refCount;
+		long timestamp;
+		MyDB_BufferManager& bufferManager;
+};
 #endif
 
 

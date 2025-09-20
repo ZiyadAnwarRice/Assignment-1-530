@@ -6,6 +6,9 @@
 
 // page handles are basically smart pointers
 using namespace std;
+class MyDB_Page;
+typedef shared_ptr<MyDB_Page> MyDB_PagePtr;
+
 class MyDB_PageHandleBase;
 typedef shared_ptr <MyDB_PageHandleBase> MyDB_PageHandle;
 
@@ -34,10 +37,15 @@ public:
 	~MyDB_PageHandleBase ();
 
 	// FEEL FREE TO ADD ADDITIONAL PUBLIC METHODS
+	MyDB_PageHandleBase(MyDB_PagePtr page);
+	MyDB_PagePtr GetPage()
+	{
+		return page;
+	}
 
 private:
 
-	// YOUR CODE HERE
+	MyDB_PagePtr page;
 };
 
 #endif
